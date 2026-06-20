@@ -124,9 +124,22 @@ export interface ChannelThumbnail2 {
   height: number;
 }
 export async function getVideoIdFromLink(link: string): Promise<string | null> {
-  const videoIdPattern = /[?&]v=([^&]+)/;
-  const match = link.match(videoIdPattern);
-  return match ? match[1] : null;
+  // Match standard YouTube URLs with ?v= parameter
+  const standardPattern = /[?&]v=([^&]+)/;
+  const standardMatch = link.match(standardPattern);
+  if (standardMatch) return standardMatch[1];
+
+  // Match YouTube Shorts URLs (youtube.com/shorts/VIDEO_ID)
+  const shortsPattern = /youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/;
+  const shortsMatch = link.match(shortsPattern);
+  if (shortsMatch) return shortsMatch[1];
+
+  // Match youtu.be short URLs (youtu.be/VIDEO_ID)
+  const shortUrlPattern = /youtu\.be\/([a-zA-Z0-9_-]{11})/;
+  const shortUrlMatch = link.match(shortUrlPattern);
+  if (shortUrlMatch) return shortUrlMatch[1];
+
+  return null;
 }
 
 export async function fetchFromYouTubeApi<T>(

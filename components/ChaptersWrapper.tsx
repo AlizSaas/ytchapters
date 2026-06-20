@@ -2,7 +2,7 @@
 import { ChapterSet } from '@prisma/client'
 import React from 'react'
 import { Button } from './ui/button'
-import {Copy,Check} from 'lucide-react'
+import {Copy, Check, Clock, FileText} from 'lucide-react'
 import Clipboard from 'clipboard'
 import {
   Tooltip,
@@ -31,15 +31,11 @@ type UserWithSavedChapters = {
   stripe_customer_id: string | null;
 } | null;
 
-const ITEM_PER_PAGE = 3;
+const ITEM_PER_PAGE = 6;
 export default function ChaptersWrapper({user}: {user: UserWithSavedChapters}) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
-
-
-  
   const [currentPage, setCurrentPage] = useState(1);
 
-  
   const totalPages = user ? Math.ceil(user.savedChapters.length / ITEM_PER_PAGE) : 0;
   const startingIndex = (currentPage - 1) * ITEM_PER_PAGE;
   const endIndex = startingIndex + ITEM_PER_PAGE;
@@ -49,10 +45,6 @@ export default function ChaptersWrapper({user}: {user: UserWithSavedChapters}) {
   const currentChapters = sortedChapters
     ? sortedChapters.slice(startingIndex, endIndex)
     : [];
-  
-
-
-
 
   useEffect(() => {
     const clipboard = new Clipboard(".btn-copy");
@@ -65,92 +57,103 @@ export default function ChaptersWrapper({user}: {user: UserWithSavedChapters}) {
     });
 
     return () => clipboard.destroy();
-   
-  }, []);
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.textContent = `.custom-scrollbar::-webkit-scrollbar {
-            width: 8px
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #555;
-        }`;
-    document.head.appendChild(style);
-    return () => {
-      document.head.removeChild(style);
-    };
   }, []);
 
+  if (!user?.savedChapters || user.savedChapters.length === 0) {
+    return (
+      <div className="mt-16 flex flex-col items-center justify-center text-center py-16 border border-dashed border-border rounded-xl bg-card/50">
+        <div className="p-4 rounded-full bg-muted mb-4">
+          <FileText className="w-8 h-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2">No chapters yet</h3>
+        <p className="text-muted-foreground max-w-sm">
+          Generate your first set of chapters by pasting a YouTube video or Shorts URL.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div className='mt-4' >
-           {
-        user?.savedChapters && user.savedChapters.length > 0 && (
-          <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-12'>
-            {
-              currentChapters.map((chapter:ChapterSet) => (
-                <div key={chapter.id} className=' border border-gray-200 rounded-md p-4 
-                flex flex-col h-[250px] overflow-hidden shadow-sm  hover:shadow-md transition duration-300 '>
-                  <h2 className='text-lg font-semibold mb-2 truncate h-16'>{chapter.title}</h2>
-                  <div className='flex-grow overflow-y-auto pr-2 custom-scrollbar'>
-                    {
-                      chapter.content.map((line,index) => (
-                        <p key={index} className='text-sm text-gray-600 mb-1'>{line}</p>
-                      ))
-                    }
+    <div className="mt-8">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-semibold">Your Generated Chapters</h2>
+        <span className="text-sm text-muted-foreground">
+          {user.savedChapters.length} {user.savedChapters.length === 1 ? 'result' : 'results'}
+        </span>
+      </div>
 
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {currentChapters.map((chapter: ChapterSet) => (
+          <div
+            key={chapter.id}
+            className="group relative bg-card border border-border rounded-xl p-5 flex flex-col h-[320px] shadow-sm hover:shadow-md hover:border-primary/30 transition-all duration-300"
+          >
+            <div className="mb-3">
+              <h3 className="text-base font-semibold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                {chapter.title}
+              </h3>
+              <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground">
+                <Clock className="w-3 h-3" />
+                <span>
+                  {new Date(chapter.createdAt).toLocaleDateString(undefined, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                </span>
+              </div>
+            </div>
 
+            <div className="flex-grow overflow-y-auto pr-1 space-y-1 scrollbar-thin">
+              {chapter.content.map((line, index) => (
+                <p
+                  key={index}
+                  className="text-sm text-muted-foreground leading-relaxed font-mono"
+                >
+                  {line}
+                </p>
+              ))}
+            </div>
 
-                  </div>
-                  <TooltipProvider>
+            <div className="mt-4 pt-3 border-t border-border">
+              <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
-                      value={"outline"}
-                      className={`w-full flex justify-center items-center space-x-2 btn-copy ${
-                        copiedId === chapter.id ? "bg-green-500" : ""
+                      className={`w-full btn-copy transition-all duration-200 ${
+                        copiedId === chapter.id
+                          ? "bg-green-500/10 text-green-600 border-green-500/30 hover:bg-green-500/20"
+                          : ""
                       }`}
-                      variant={"outline"}
+                      variant="outline"
+                      size="sm"
                       id={chapter.id}
                       data-clipboard-text={chapter.content.join("\n")}
                     >
                       {copiedId === chapter.id ? (
-                        <Check className="w-5 h-5" />
+                        <Check className="w-4 h-4 mr-2" />
                       ) : (
-                        <Copy className="w-5 h-5" />
+                        <Copy className="w-4 h-4 mr-2" />
                       )}
-                      <span>{copiedId === chapter.id ? "Copied" : "Copy"}</span>
+                      <span>{copiedId === chapter.id ? "Copied!" : "Copy chapters"}</span>
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
                       {copiedId === chapter.id
-                        ? "Copied To Clipboard!"
-                        : "Copy chapters to clipboard!"}
+                        ? "Copied to clipboard!"
+                        : "Copy chapters to clipboard"}
                     </p>
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-                </div>
-              ))
-            }
-
+            </div>
           </div>
+        ))}
+      </div>
 
-
-        )
-       
-      }
-          {user && user.savedChapters.length > 0 && (
-        <Pagination className="mt-8">
+      {totalPages > 1 && (
+        <Pagination className="mt-10">
           <PaginationContent>
             <PaginationItem>
               <PaginationPrevious
@@ -166,9 +169,11 @@ export default function ChaptersWrapper({user}: {user: UserWithSavedChapters}) {
                 <PaginationLink
                   href="#"
                   onClick={() => setCurrentPage(index + 1)}
-                  className={`${
-                    currentPage === index + 1 ? "bg-yellow-500 text-white" : ""
-                  }`}
+                  className={
+                    currentPage === index + 1
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                      : ""
+                  }
                 >
                   {index + 1}
                 </PaginationLink>
@@ -190,8 +195,6 @@ export default function ChaptersWrapper({user}: {user: UserWithSavedChapters}) {
           </PaginationContent>
         </Pagination>
       )}
-        
     </div>
- 
-  )
+  );
 }

@@ -75,7 +75,7 @@ const OmgBruh = () => {
             <div className="p-3 rounded-full bg-primary/10">
               <Film className="w-5 h-5 text-primary" />
             </div>
-            <h3 className="font-semibold">Videos &amp; Shorts</h3>
+            <h3 className="font-semibold">Videos & Shorts</h3>
             <p className="text-sm text-muted-foreground text-center">
               Works with both regular videos and Shorts
             </p>

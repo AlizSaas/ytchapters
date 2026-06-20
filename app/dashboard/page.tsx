@@ -98,7 +98,7 @@ const Page = async () => {
           </div>
         </div>
 
-        {(isEligible || !isEligible) && (
+        {message && (
           <div className="text-sm text-muted-foreground">
             {message}
           </div>
